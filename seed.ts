@@ -4,7 +4,10 @@ import { Career } from './src/models/Career';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/technictechnologies';
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  throw new Error('MONGODB_URI is not set');
+}
 
 const seedData = async () => {
   try {

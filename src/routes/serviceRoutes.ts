@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { 
   getServices, 
   getServiceBySlug, 
@@ -9,6 +10,7 @@ import {
 } from '../controllers/serviceController';
 
 const router = express.Router();
+validateObjectId(router);
 
 // Public routes
 router.get('/services', getServices);

@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { 
   getBlogs, 
   getBlogBySlug, 
@@ -9,6 +10,7 @@ import {
 } from '../controllers/blogController';
 
 const router = express.Router();
+validateObjectId(router);
 
 // Public routes
 router.get('/blogs', getBlogs);

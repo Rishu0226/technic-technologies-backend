@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { jwtSecret } from '../utils/jwt';
 
 export interface AuthRequest extends Request {
   user?: any;
@@ -17,11 +18,16 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+      const decoded = jwt.verify(token, jwtSecret());
       req.user = decoded;
       next();
     } catch (error) {
-      res.status(401).json({ error: 'Not authorized, token failed' });
+      const missingSecret = error instanceof Error && error.message === 'JWT_SECRET is not set';
+      res.status(missingSecret ? 500 : 401).json({
+        success: false,
+        message: missingSecret ? 'Server authentication is not configured' : 'Not authorized, token failed',
+        error: missingSecret ? 'Server authentication is not configured' : 'Not authorized, token failed',
+      });
     }
   } else {
     res.status(401).json({ error: 'Not authorized, no token' });

@@ -18,7 +18,7 @@ const slugify = (value: string) =>
     .replace(/^-+|-+$/g, '');
 
 const getApiKey = () => {
-  const raw = process.env.GEMINI_API_KEY || process.env.DEEP_SEEK_API_KEY || '';
+  const raw = process.env.GEMINI_API_KEY || '';
   return raw.trim();
 };
 
@@ -49,17 +49,25 @@ const callGemini = async (systemPrompt: string, userPrompt: string) => {
   let response: Awaited<ReturnType<typeof fetch>> | null = null;
 
   for (const model of GEMINI_MODELS) {
-    response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': apiKey,
-        },
-        body,
-      }
-    );
+    try {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-goog-api-key': apiKey,
+          },
+          body,
+          signal: AbortSignal.timeout(25000),
+        }
+      );
+    } catch {
+      const lastModel = model === GEMINI_MODELS[GEMINI_MODELS.length - 1];
+      if (lastModel) throw new Error('Gemini request timed out');
+      console.warn(`Gemini ${model} timed out, trying the next model`);
+      continue;
+    }
     payload = await response.json().catch(() => null);
 
     if (response.ok) break;
@@ -190,8 +198,11 @@ Do not include image URLs, ids, status, or timestamps.`;
     const generatedData = normalizeBlog(await callGemini(systemPrompt, prompt.trim()));
     res.status(200).json({ data: generatedData });
   } catch (error: any) {
-    console.error('Blog Generation Error:', error);
-    res.status(500).json({ error: error.message || 'Server error' });
+    console.error('Blog Generation Error:', error instanceof Error ? error.message : 'Server error');
+    const message = process.env.NODE_ENV === 'production'
+      ? 'AI generation failed. Try again shortly.'
+      : (error?.message || 'Server error');
+    res.status(500).json({ success: false, message, error: message });
   }
 };
 
@@ -229,7 +240,10 @@ Do not include ids, application form fields, email addresses, status, or timesta
     const generatedData = normalizeCareer(await callGemini(systemPrompt, prompt.trim()));
     res.status(200).json({ data: generatedData });
   } catch (error: any) {
-    console.error('Career Generation Error:', error);
-    res.status(500).json({ error: error.message || 'Server error' });
+    console.error('Career Generation Error:', error instanceof Error ? error.message : 'Server error');
+    const message = process.env.NODE_ENV === 'production'
+      ? 'AI generation failed. Try again shortly.'
+      : (error?.message || 'Server error');
+    res.status(500).json({ success: false, message, error: message });
   }
 };

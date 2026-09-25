@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authorize = exports.protect = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const jwt_1 = require("../utils/jwt");
 const protect = async (req, res, next) => {
     let token;
     // Try extracting from cookies first, then authorization header
@@ -16,12 +17,17 @@ const protect = async (req, res, next) => {
     }
     if (token) {
         try {
-            const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'secret');
+            const decoded = jsonwebtoken_1.default.verify(token, (0, jwt_1.jwtSecret)());
             req.user = decoded;
             next();
         }
         catch (error) {
-            res.status(401).json({ error: 'Not authorized, token failed' });
+            const missingSecret = error instanceof Error && error.message === 'JWT_SECRET is not set';
+            res.status(missingSecret ? 500 : 401).json({
+                success: false,
+                message: missingSecret ? 'Server authentication is not configured' : 'Not authorized, token failed',
+                error: missingSecret ? 'Server authentication is not configured' : 'Not authorized, token failed',
+            });
         }
     }
     else {

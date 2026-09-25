@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { 
   getProducts, 
   getProductBySlug, 
@@ -9,6 +10,7 @@ import {
 } from '../controllers/productController';
 
 const router = express.Router();
+validateObjectId(router);
 
 // Public routes
 router.get('/products', getProducts);

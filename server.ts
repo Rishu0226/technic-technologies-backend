@@ -1,26 +1,19 @@
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import app from './src/app';
+import dotenv from "dotenv";
+import app from "./src/app";
+import { connectDatabase } from "./src/config/db";
 
-// Load environment variables
 dotenv.config();
 
-const PORT = process.env.PORT || 3001;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/technictechnologies';
+const port = Number(process.env.PORT) || 5000;
 
-// Connect to MongoDB
-mongoose.connect(MONGODB_URI)
+connectDatabase()
   .then(() => {
-    console.log('✅ Connected to MongoDB');
-    
-    // Start Express server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`Frontend URL allowed: ${process.env.FRONTEND_URL}`);
-      console.log(`Admin URL allowed: ${process.env.ADMIN_URL}`);
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
     });
   })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
+  .catch((error) => {
+    const message = error instanceof Error ? error.message : "connection failed";
+    console.error("MongoDB connection error:", message);
     process.exit(1);
   });

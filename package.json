@@ -12,7 +12,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Technic Technologies API",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.11.0",

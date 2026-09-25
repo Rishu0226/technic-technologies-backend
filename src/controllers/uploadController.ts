@@ -11,7 +11,7 @@ function uploadBuffer(buffer: Buffer, folder: string, filename: string) {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: `technic/${folder}`,
-        resource_type: "image",
+        resource_type: "auto",
         use_filename: true,
         unique_filename: true,
         filename_override: filename.replace(/\.[^.]+$/, ""),
@@ -39,7 +39,7 @@ export const uploadAsset = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: "Not authorized." });
     }
     if (!file) {
-      return res.status(400).json({ error: "Choose an image file to upload." });
+      return res.status(400).json({ success: false, message: "Choose a file to upload.", error: "Choose a file to upload." });
     }
 
     const requested = String(req.body.folder || "media");
@@ -49,7 +49,7 @@ export const uploadAsset = async (req: AuthRequest, res: Response) => {
     const media = await Media.create({
       filename: file.originalname,
       url: uploaded.secure_url,
-      type: "image",
+      type: file.mimetype.startsWith("video/") ? "video" : "image",
       mimeType: file.mimetype,
       size: file.size,
       alt: String(req.body.alt || ""),
@@ -63,7 +63,7 @@ export const uploadAsset = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ error: "Image upload failed." });
+    res.status(500).json({ success: false, message: "Upload failed.", error: "Upload failed." });
   }
 };
 

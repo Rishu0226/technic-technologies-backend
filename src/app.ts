@@ -2,37 +2,64 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
+import { errorHandler, notFound } from './middleware/errorHandler';
 
 const app = express();
 
-// Security and utility middlewares
-app.use(helmet());
-app.use(express.json());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
+app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:3005',
-  'http://localhost:3000', // Added for default Next.js frontend port
-  process.env.ADMIN_URL || 'http://localhost:3006'
+const localOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3005',
+  'http://localhost:3006',
+  'http://localhost:5000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3005',
+  'http://127.0.0.1:3006',
+  'http://127.0.0.1:5000',
 ];
+
+function normalizeOrigin(value?: string) {
+  return value?.trim().replace(/\/$/, '') || '';
+}
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+
+    const allowed = new Set(
+      [
+        ...localOrigins,
+        normalizeOrigin(process.env.FRONTEND_URL),
+        normalizeOrigin(process.env.ADMIN_URL),
+      ].filter(Boolean),
+    );
+
+    if (allowed.has(origin.replace(/\/$/, ''))) {
+      return callback(null, true);
     }
-    return callback(null, true);
+
+    return callback(null, false);
   },
-  credentials: true, // Allow cookies
+  credentials: true,
 }));
 
-// Basic health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date() });
-});
+const health = (_req: express.Request, res: express.Response) => {
+  const connected = mongoose.connection.readyState === 1;
+  res.status(connected ? 200 : 503).json({
+    success: connected,
+    status: connected ? 'healthy' : 'unhealthy',
+    environment: process.env.NODE_ENV || 'development',
+  });
+};
+
+app.get('/api/health', health);
+app.get('/health', health);
 
 // Import routes
 import authRoutes from './routes/authRoutes';
@@ -58,5 +85,8 @@ app.use('/api', settingsRoutes);
 app.use('/api', contactRoutes);
 app.use('/api/admin', aiRoutes);
 app.use('/api/admin', uploadRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

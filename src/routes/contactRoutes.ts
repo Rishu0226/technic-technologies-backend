@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { 
   submitContact, 
   getContacts, 
@@ -8,6 +9,7 @@ import {
 } from '../controllers/contactController';
 
 const router = express.Router();
+validateObjectId(router);
 
 // Public routes
 router.post('/contact', submitContact);

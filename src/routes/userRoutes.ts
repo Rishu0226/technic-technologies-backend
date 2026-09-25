@@ -1,8 +1,10 @@
 import express from 'express';
 import { protect, authorize } from '../middleware/authMiddleware';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { getUsers, createUser, updateUser, deleteUser } from '../controllers/userController';
 
 const router = express.Router();
+validateObjectId(router);
 
 // Apply middlewares directly to routes instead of router.use() to prevent leaking
 
