@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "node ./node_modules/typescript/lib/tsc.js",
     "dev": "nodemon --watch src --watch server.ts --ext ts,js,json --exec tsx server.ts",
     "start": "node dist/server.js",
     "seed": "tsc seed.ts --esModuleInterop --module commonjs --ignoreConfig && node seed.js",
@@ -17,7 +17,7 @@
     "node": "24.x"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -30,7 +30,6 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

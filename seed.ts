@@ -16,7 +16,7 @@ const seedData = async () => {
 
     // Seed Admin User
     const { User } = await import('./src/models/User');
-    const bcrypt = await import('bcrypt');
+    const bcrypt = await import('bcryptjs');
     
     const adminEmail = process.env.DEFAULT_ADMIN_EMAIL;
     const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
