@@ -14,7 +14,7 @@
   "license": "ISC",
   "description": "Technic Technologies API",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

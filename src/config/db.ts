@@ -8,15 +8,27 @@ export function connectDatabase() {
   }
 
   if (!connection) {
-    const uri = process.env.MONGODB_URI;
+    const uri = process.env.MONGODB_URI?.trim();
     if (!uri) {
       return Promise.reject(new Error("MONGODB_URI is not set"));
     }
 
-    connection = mongoose.connect(uri).catch((error) => {
-      connection = null;
-      throw error;
-    });
+    const local = /^mongodb(\+srv)?:\/\/(?:[^@/]+@)?(localhost|127\.0\.0\.1)(?::|\/|$)/i.test(uri);
+    if (local && process.env.VERCEL) {
+      return Promise.reject(
+        new Error("MONGODB_URI points at localhost, which Vercel cannot reach. Use the MongoDB Atlas connection string."),
+      );
+    }
+
+    connection = mongoose
+      .connect(uri, {
+        serverSelectionTimeoutMS: 8000,
+        family: 4,
+      })
+      .catch((error: unknown) => {
+        connection = null;
+        throw error;
+      });
   }
 
   return connection;

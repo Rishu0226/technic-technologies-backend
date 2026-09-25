@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import { connectDatabase } from './config/db';
 
 const app = express();
 
@@ -57,6 +58,25 @@ const health = (_req: express.Request, res: express.Response) => {
     environment: process.env.NODE_ENV || 'development',
   });
 };
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDatabase();
+    next();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'connection failed';
+    console.error('MongoDB connection error:', message.replace(/\/\/[^@\s/]+@/g, '//***@'));
+    if (req.path === '/api/health' || req.path === '/health') {
+      health(req, res);
+      return;
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed',
+      error: 'Database connection failed',
+    });
+  }
+});
 
 app.get('/api/health', health);
 app.get('/health', health);
