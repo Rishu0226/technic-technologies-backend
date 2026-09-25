@@ -12,6 +12,12 @@ export const getServices = async (req: Request, res: Response) => {
   }
 };
 
+const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function cleanSlug(value: unknown) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
 export const getServiceBySlug = async (req: Request, res: Response) => {
   try {
     const service = await Service.findOne({ slug: req.params.slug, status: 'Published' });
@@ -22,22 +28,46 @@ export const getServiceBySlug = async (req: Request, res: Response) => {
   }
 };
 
+export const getServiceById = async (req: Request, res: Response) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) return res.status(404).json({ error: 'Service not found' });
+    res.json(service);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 export const createService = async (req: Request, res: Response) => {
   try {
-    const service = await Service.create(req.body);
+    const slug = cleanSlug(req.body.slug);
+    if (!slugPattern.test(slug)) {
+      return res.status(400).json({ error: 'Slug must be lowercase words separated by hyphens.' });
+    }
+    const service = await Service.create({ ...req.body, slug });
     res.status(201).json(service);
   } catch (error) {
-    res.status(400).json({ error: 'Invalid data' });
+    const duplicate = typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
+    res.status(400).json({ error: duplicate ? 'Slug must be unique.' : 'Invalid data' });
   }
 };
 
 export const updateService = async (req: Request, res: Response) => {
   try {
-    const service = await Service.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
+    const slug = cleanSlug(req.body.slug);
+    if (req.body.slug !== undefined && !slugPattern.test(slug)) {
+      return res.status(400).json({ error: 'Slug must be lowercase words separated by hyphens.' });
+    }
+    const service = await Service.findByIdAndUpdate(
+      req.params.id,
+      slug ? { ...req.body, slug } : req.body,
+      { returnDocument: "after" },
+    );
     if (!service) return res.status(404).json({ error: 'Service not found' });
     res.json(service);
   } catch (error) {
-    res.status(400).json({ error: 'Invalid data' });
+    const duplicate = typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
+    res.status(400).json({ error: duplicate ? 'Slug must be unique.' : 'Invalid data' });
   }
 };
 

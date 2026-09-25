@@ -166,6 +166,168 @@ const normalizeCareer = (raw: any) => {
   };
 };
 
+const SERVICE_ICONS = ['Layout', 'Smartphone', 'Terminal', 'Sparkles', 'Code', 'Server', 'ShieldCheck', 'Layers', 'Cpu', 'Bot', 'Rocket'];
+
+const serviceIcon = (value: unknown, fallback = 'Code') => {
+  const name = asString(value);
+  return SERVICE_ICONS.includes(name) ? name : fallback;
+};
+
+const asNamedItems = (value: unknown) =>
+  Array.isArray(value)
+    ? value
+        .map((item) => ({
+          title: asString(item?.title),
+          description: asString(item?.description),
+          icon: serviceIcon(item?.icon, ''),
+        }))
+        .filter((item) => item.title && item.description)
+    : [];
+
+const normalizeService = (raw: any) => {
+  const title = asString(raw?.title);
+  const description = asString(raw?.description);
+  const benefits = asNamedItems(raw?.benefits);
+  const features = asNamedItems(raw?.features);
+  const technologies = Array.isArray(raw?.technologies)
+    ? raw.technologies
+        .map((item: any) => ({
+          name: asString(item?.name),
+          category: asString(item?.category),
+          icon: serviceIcon(item?.icon, ''),
+        }))
+        .filter((item: { name: string }) => item.name)
+    : [];
+  const process = Array.isArray(raw?.process)
+    ? raw.process
+        .map((item: any, index: number) => ({
+          step: asString(item?.step) || String(index + 1).padStart(2, '0'),
+          title: asString(item?.title),
+          description: asString(item?.description),
+        }))
+        .filter((item: { title: string }) => item.title)
+    : [];
+  const useCases = Array.isArray(raw?.useCases)
+    ? raw.useCases
+        .map((item: any) => ({ title: asString(item?.title), description: asString(item?.description) }))
+        .filter((item: { title: string }) => item.title)
+    : [];
+  const faqs = Array.isArray(raw?.faqs)
+    ? raw.faqs
+        .map((item: any) => ({ question: asString(item?.question), answer: asString(item?.answer) }))
+        .filter((item: { question: string; answer: string }) => item.question && item.answer)
+    : [];
+
+  if (!title || !description || benefits.length === 0 || features.length === 0) {
+    throw new Error('AI did not return a complete service');
+  }
+
+  return {
+    title,
+    slug: slugify(asString(raw?.slug) || title),
+    shortDescription: asString(raw?.shortDescription) || description.slice(0, 180),
+    description,
+    icon: serviceIcon(raw?.icon, 'Code'),
+    heroEyebrow: asString(raw?.heroEyebrow) || 'Service',
+    heroTitle: asString(raw?.heroTitle) || title,
+    heroDescription: asString(raw?.heroDescription) || asString(raw?.shortDescription) || description,
+    benefits,
+    overview: {
+      title: asString(raw?.overview?.title) || 'What We Build',
+      description: asString(raw?.overview?.description) || description,
+    },
+    features,
+    technologies,
+    process,
+    deliverables: asStringArray(raw?.deliverables),
+    useCases,
+    faqs,
+    cta: {
+      title: asString(raw?.cta?.title) || 'Ready to Build Your Solution?',
+      description: asString(raw?.cta?.description) || 'Tell us what you are building and our engineering team will help you turn it into a scalable product.',
+      buttonText: asString(raw?.cta?.buttonText) || 'Get a Free Consultation',
+    },
+    seo: {
+      metaTitle: asString(raw?.seo?.metaTitle) || title,
+      metaDescription: (asString(raw?.seo?.metaDescription) || asString(raw?.shortDescription) || description).slice(0, 160),
+      keywords: asString(raw?.seo?.keywords),
+    },
+  };
+};
+
+export const generateServiceContent = async (req: Request, res: Response) => {
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      return res.status(400).json({ error: 'Valid prompt is required' });
+    }
+
+    const systemPrompt = `You are a senior services writer for Technic Technologies, an enterprise software, web, mobile, cloud, data, and AI company.
+Write a complete service page from the user's prompt.
+Respond ONLY with a JSON object. Do not add markdown fences or commentary.
+Do not include image URLs, ids, order, status, or timestamps. Images are uploaded separately.
+
+Use this exact shape and fill every field:
+{
+  "title": "Service name",
+  "slug": "lowercase-hyphenated-slug",
+  "shortDescription": "One or two sentences for the service card",
+  "description": "Three or four sentences describing the service",
+  "icon": "One of Layout, Smartphone, Terminal, Sparkles, Code, Server, ShieldCheck, Layers, Cpu, Bot, Rocket",
+  "heroEyebrow": "Service",
+  "heroTitle": "Hero headline, usually the service name",
+  "heroDescription": "Two sentences for the hero",
+  "benefits": [
+    { "title": "Short benefit", "description": "One sentence", "icon": "Layout" }
+  ],
+  "overview": {
+    "title": "What We Build",
+    "description": "Two or three sentences about what the team delivers"
+  },
+  "features": [
+    { "title": "Capability", "description": "One or two sentences", "icon": "Code" }
+  ],
+  "technologies": [
+    { "name": "Next.js", "category": "Frontend", "icon": "Layers" }
+  ],
+  "process": [
+    { "step": "01", "title": "Discover", "description": "One sentence" }
+  ],
+  "deliverables": ["Specific deliverable"],
+  "useCases": [
+    { "title": "Business use case", "description": "One or two sentences" }
+  ],
+  "faqs": [
+    { "question": "Customer question", "answer": "Clear answer in two sentences" }
+  ],
+  "cta": {
+    "title": "Ready to Build Your Solution?",
+    "description": "One sentence inviting the reader to talk to the team",
+    "buttonText": "Get a Free Consultation"
+  },
+  "seo": {
+    "metaTitle": "SEO title, about 60 characters",
+    "metaDescription": "Meta description, 140 to 160 characters",
+    "keywords": "comma, separated, keywords"
+  }
+}
+
+Include 4 benefits, 6 features, 6 to 8 technologies, 6 process steps, 5 to 7 deliverables, 4 use cases, and 4 FAQs.
+Process steps should be Discover, Design, Develop, Test, Launch, and Scale, written specifically for this service.
+Icons must be one of: Layout, Smartphone, Terminal, Sparkles, Code, Server, ShieldCheck, Layers, Cpu, Bot, Rocket.`;
+
+    const generatedData = normalizeService(await callGemini(systemPrompt, prompt.trim()));
+    res.status(200).json({ data: generatedData });
+  } catch (error: any) {
+    console.error('Service Generation Error:', error instanceof Error ? error.message : 'Server error');
+    const message = process.env.NODE_ENV === 'production'
+      ? 'AI generation failed. Try again shortly.'
+      : (error?.message || 'Server error');
+    res.status(500).json({ success: false, message, error: message });
+  }
+};
+
 export const generateBlogContent = async (req: Request, res: Response) => {
   try {
     const { prompt } = req.body;

@@ -13,6 +13,7 @@ const router = express_1.default.Router();
 router.get('/services', serviceController_1.getServices);
 router.get('/services/:slug', serviceController_1.getServiceBySlug);
 // Admin routes (Protected)
+router.get('/admin/services/:id', authMiddleware_1.protect, serviceController_1.getServiceById);
 router.post('/admin/services', authMiddleware_1.protect, serviceController_1.createService);
 router.put('/admin/services/:id', authMiddleware_1.protect, serviceController_1.updateService);
 router.delete('/admin/services/:id', authMiddleware_1.protect, serviceController_1.deleteService);

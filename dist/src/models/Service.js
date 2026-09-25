@@ -35,13 +35,71 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Service = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const titled = {
+    title: { type: String, default: '' },
+    description: { type: String, default: '' },
+    icon: { type: String, default: '' },
+};
 const ServiceSchema = new mongoose_1.Schema({
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     description: { type: String, required: true },
+    shortDescription: { type: String, default: '' },
     icon: { type: String, required: true },
-    image: { type: String },
+    image: { type: String, default: '' },
+    heroImage: { type: String, default: '' },
+    heroEyebrow: { type: String, default: '' },
+    heroTitle: { type: String, default: '' },
+    heroDescription: { type: String, default: '' },
+    benefits: { type: [titled], default: undefined },
+    overview: {
+        title: { type: String, default: '' },
+        description: { type: String, default: '' },
+        image: { type: String, default: '' },
+    },
+    features: { type: [titled], default: undefined },
+    technologies: {
+        type: [{
+                name: { type: String, default: '' },
+                category: { type: String, default: '' },
+                icon: { type: String, default: '' },
+            }],
+        default: undefined,
+    },
+    process: {
+        type: [{
+                step: { type: String, default: '' },
+                title: { type: String, default: '' },
+                description: { type: String, default: '' },
+            }],
+        default: undefined,
+    },
+    deliverables: { type: [String], default: undefined },
+    useCases: {
+        type: [{
+                title: { type: String, default: '' },
+                description: { type: String, default: '' },
+            }],
+        default: undefined,
+    },
+    faqs: {
+        type: [{
+                question: { type: String, default: '' },
+                answer: { type: String, default: '' },
+            }],
+        default: undefined,
+    },
+    cta: {
+        title: { type: String, default: '' },
+        description: { type: String, default: '' },
+        buttonText: { type: String, default: '' },
+    },
+    seo: {
+        metaTitle: { type: String, default: '' },
+        metaDescription: { type: String, default: '' },
+        keywords: { type: String, default: '' },
+    },
     order: { type: Number, default: 0 },
-    status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' }
+    status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },
 }, { timestamps: true });
 exports.Service = mongoose_1.default.model('Service', ServiceSchema);

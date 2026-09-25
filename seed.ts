@@ -173,6 +173,14 @@ const seedData = async () => {
       console.log('Seeded services data successfully!');
     }
 
+    const { Solution } = await import('./src/models/Solution');
+    const { defaultSolutions } = await import('./src/data/defaultSolutions');
+    const existingSolutions = await Solution.countDocuments();
+    if (existingSolutions === 0) {
+      await Solution.insertMany(defaultSolutions);
+      console.log('Seeded solutions data successfully!');
+    }
+
     // Seed Products
     const { Product } = await import('./src/models/Product');
     const existingProducts = await Product.countDocuments();

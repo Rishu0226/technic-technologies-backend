@@ -1,23 +1,24 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IService extends Document {
+export interface ISolution extends Document {
   title: string;
   slug: string;
-  description: string;
   shortDescription?: string;
+  description: string;
   icon: string;
-  image?: string;
+  industry?: string;
+  cardImage?: string;
   heroImage?: string;
-  heroEyebrow?: string;
   heroTitle?: string;
   heroDescription?: string;
+  overview?: { title?: string; description?: string };
+  overviewImage?: string;
   benefits?: { title: string; description: string; icon?: string }[];
-  overview?: { title?: string; description?: string; image?: string };
   features?: { title: string; description: string; icon?: string }[];
-  technologies?: { name: string; category?: string; icon?: string }[];
-  process?: { step?: string; title: string; description?: string }[];
-  deliverables?: string[];
   useCases?: { title: string; description: string }[];
+  process?: { step?: string; title: string; description?: string }[];
+  technologies?: { name: string; category?: string; icon?: string }[];
+  metrics?: { value: string; label: string }[];
   faqs?: { question: string; answer: string }[];
   cta?: { title?: string; description?: string; buttonText?: string };
   seo?: { metaTitle?: string; metaDescription?: string; keywords?: string };
@@ -33,30 +34,26 @@ const titled = {
   icon: { type: String, default: '' },
 };
 
-const ServiceSchema = new Schema<IService>({
+const SolutionSchema = new Schema<ISolution>({
   title: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
-  description: { type: String, required: true },
   shortDescription: { type: String, default: '' },
+  description: { type: String, required: true },
   icon: { type: String, required: true },
-  image: { type: String, default: '' },
+  industry: { type: String, default: '' },
+  cardImage: { type: String, default: '' },
   heroImage: { type: String, default: '' },
-  heroEyebrow: { type: String, default: '' },
   heroTitle: { type: String, default: '' },
   heroDescription: { type: String, default: '' },
-  benefits: { type: [titled], default: undefined },
   overview: {
     title: { type: String, default: '' },
     description: { type: String, default: '' },
-    image: { type: String, default: '' },
   },
+  overviewImage: { type: String, default: '' },
+  benefits: { type: [titled], default: undefined },
   features: { type: [titled], default: undefined },
-  technologies: {
-    type: [{
-      name: { type: String, default: '' },
-      category: { type: String, default: '' },
-      icon: { type: String, default: '' },
-    }],
+  useCases: {
+    type: [{ title: { type: String, default: '' }, description: { type: String, default: '' } }],
     default: undefined,
   },
   process: {
@@ -67,19 +64,20 @@ const ServiceSchema = new Schema<IService>({
     }],
     default: undefined,
   },
-  deliverables: { type: [String], default: undefined },
-  useCases: {
+  technologies: {
     type: [{
-      title: { type: String, default: '' },
-      description: { type: String, default: '' },
+      name: { type: String, default: '' },
+      category: { type: String, default: '' },
+      icon: { type: String, default: '' },
     }],
     default: undefined,
   },
+  metrics: {
+    type: [{ value: { type: String, default: '' }, label: { type: String, default: '' } }],
+    default: undefined,
+  },
   faqs: {
-    type: [{
-      question: { type: String, default: '' },
-      answer: { type: String, default: '' },
-    }],
+    type: [{ question: { type: String, default: '' }, answer: { type: String, default: '' } }],
     default: undefined,
   },
   cta: {
@@ -96,4 +94,4 @@ const ServiceSchema = new Schema<IService>({
   status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },
 }, { timestamps: true });
 
-export const Service = mongoose.model<IService>('Service', ServiceSchema);
+export const Solution = mongoose.model<ISolution>('Solution', SolutionSchema);

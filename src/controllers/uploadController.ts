@@ -4,7 +4,7 @@ import cloudinary from "../config/cloudinary";
 import { Media } from "../models/Media";
 import { AuthRequest } from "../middleware/authMiddleware";
 
-const FOLDERS = new Set(["blogs", "products", "services", "media"]);
+const FOLDERS = new Set(["blogs", "products", "services", "solutions", "media"]);
 
 function uploadBuffer(buffer: Buffer, folder: string, filename: string) {
   return new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {

@@ -3,7 +3,8 @@ import { protect } from '../middleware/authMiddleware';
 import { validateObjectId } from '../middleware/validateObjectId';
 import { 
   getServices, 
-  getServiceBySlug, 
+  getServiceBySlug,
+  getServiceById,
   createService, 
   updateService, 
   deleteService
@@ -17,6 +18,7 @@ router.get('/services', getServices);
 router.get('/services/:slug', getServiceBySlug);
 
 // Admin routes (Protected)
+router.get('/admin/services/:id', protect, getServiceById);
 router.post('/admin/services', protect, createService);
 router.put('/admin/services/:id', protect, updateService);
 router.delete('/admin/services/:id', protect, deleteService);
