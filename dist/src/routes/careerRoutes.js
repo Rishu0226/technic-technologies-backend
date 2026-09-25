@@ -5,8 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = require("../middleware/authMiddleware");
+const validateObjectId_1 = require("../middleware/validateObjectId");
 const careerController_1 = require("../controllers/careerController");
 const router = express_1.default.Router();
+(0, validateObjectId_1.validateObjectId)(router);
 // Public routes
 router.get('/careers', careerController_1.getCareers);
 router.get('/careers/:slug', careerController_1.getCareerBySlug);

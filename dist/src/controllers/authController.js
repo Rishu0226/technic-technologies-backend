@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.logout = exports.setupAdmin = exports.login = void 0;
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
 const jwt_1 = require("../utils/jwt");
@@ -20,7 +20,7 @@ const login = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Email and password are required', error: 'Email and password are required' });
         }
         const user = await User_1.User.findOne({ email });
-        if (user && (await bcrypt_1.default.compare(password, user.passwordHash))) {
+        if (user && (await bcryptjs_1.default.compare(password, user.passwordHash))) {
             const token = generateToken(user._id.toString(), user.role);
             // Set HTTP-only cookie
             const production = process.env.NODE_ENV === 'production';
@@ -63,8 +63,8 @@ const setupAdmin = async (req, res) => {
         if (adminExists) {
             return res.status(403).json({ error: 'Setup locked: An admin user already exists in the system.' });
         }
-        const salt = await bcrypt_1.default.genSalt(10);
-        const passwordHash = await bcrypt_1.default.hash(password, salt);
+        const salt = await bcryptjs_1.default.genSalt(10);
+        const passwordHash = await bcryptjs_1.default.hash(password, salt);
         const user = await User_1.User.create({
             name: 'Super Admin',
             email,

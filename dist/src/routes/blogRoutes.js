@@ -5,8 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = require("../middleware/authMiddleware");
+const validateObjectId_1 = require("../middleware/validateObjectId");
 const blogController_1 = require("../controllers/blogController");
 const router = express_1.default.Router();
+(0, validateObjectId_1.validateObjectId)(router);
 // Public routes
 router.get('/blogs', blogController_1.getBlogs);
 router.get('/blogs/:slug', blogController_1.getBlogBySlug);

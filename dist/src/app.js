@@ -9,8 +9,11 @@ const helmet_1 = __importDefault(require("helmet"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const errorHandler_1 = require("./middleware/errorHandler");
+const db_1 = require("./config/db");
 const app = (0, express_1.default)();
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 app.use(express_1.default.json({ limit: '1mb' }));
 app.use((0, cookie_parser_1.default)());
 const localOrigins = [
@@ -50,19 +53,27 @@ const health = (_req, res) => {
         environment: process.env.NODE_ENV || 'development',
     });
 };
+app.use(async (req, res, next) => {
+    try {
+        await (0, db_1.connectDatabase)();
+        next();
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : 'connection failed';
+        console.error('MongoDB connection error:', message.replace(/\/\/[^@\s/]+@/g, '//***@'));
+        if (req.path === '/api/health' || req.path === '/health') {
+            health(req, res);
+            return;
+        }
+        res.status(500).json({
+            success: false,
+            message: 'Database connection failed',
+            error: 'Database connection failed',
+        });
+    }
+});
 app.get('/api/health', health);
 app.get('/health', health);
-app.param('id', (req, res, next, id) => {
-    if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
-        res.status(400).json({
-            success: false,
-            message: 'Invalid id',
-            error: 'Invalid id',
-        });
-        return;
-    }
-    next();
-});
 // Import routes
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const careerRoutes_1 = __importDefault(require("./routes/careerRoutes"));

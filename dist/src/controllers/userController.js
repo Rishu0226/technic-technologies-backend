@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUser = exports.updateUser = exports.createUser = exports.getUsers = void 0;
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const User_1 = require("../models/User");
 const getUsers = async (req, res) => {
     try {
@@ -34,8 +34,8 @@ const createUser = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ error: 'User with this email already exists' });
         }
-        const salt = await bcrypt_1.default.genSalt(10);
-        const passwordHash = await bcrypt_1.default.hash(password, salt);
+        const salt = await bcryptjs_1.default.genSalt(10);
+        const passwordHash = await bcryptjs_1.default.hash(password, salt);
         const user = await User_1.User.create({
             name,
             email,
