@@ -38,7 +38,7 @@ const createBlog = async (req, res) => {
 exports.createBlog = createBlog;
 const updateBlog = async (req, res) => {
     try {
-        const blog = await Blog_1.Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const blog = await Blog_1.Blog.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
         if (!blog)
             return res.status(404).json({ error: 'Blog not found' });
         res.json(blog);

@@ -32,7 +32,7 @@ const updateSettings = async (req, res) => {
             settings = await SiteSettings_1.SiteSettings.create(req.body);
         }
         else {
-            settings = await SiteSettings_1.SiteSettings.findByIdAndUpdate(settings._id, req.body, { new: true });
+            settings = await SiteSettings_1.SiteSettings.findByIdAndUpdate(settings._id, req.body, { returnDocument: "after" });
         }
         res.json(settings);
     }

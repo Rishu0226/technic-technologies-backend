@@ -77,7 +77,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { name, email, role, status },
-      { new: true }
+      { returnDocument: "after" }
     ).select('-passwordHash');
 
     res.json(updatedUser);

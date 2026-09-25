@@ -42,7 +42,7 @@ const createCareer = async (req, res) => {
 exports.createCareer = createCareer;
 const updateCareer = async (req, res) => {
     try {
-        const career = await Career_1.Career.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const career = await Career_1.Career.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
         if (!career)
             return res.status(404).json({ error: 'Job not found' });
         res.json(career);
@@ -99,7 +99,7 @@ exports.getApplications = getApplications;
 const updateApplicationStatus = async (req, res) => {
     try {
         const { status, notes } = req.body;
-        const application = await Application_1.Application.findByIdAndUpdate(req.params.id, { status, ...(notes !== undefined && { notes }) }, { new: true });
+        const application = await Application_1.Application.findByIdAndUpdate(req.params.id, { status, ...(notes !== undefined && { notes }) }, { returnDocument: "after" });
         if (!application)
             return res.status(404).json({ error: 'Application not found' });
         res.json(application);

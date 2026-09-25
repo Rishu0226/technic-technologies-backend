@@ -25,7 +25,7 @@ export const getContacts = async (req: Request, res: Response) => {
 export const updateContactStatus = async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
-    const contact = await Contact.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const contact = await Contact.findByIdAndUpdate(req.params.id, { status }, { returnDocument: "after" });
     if (!contact) return res.status(404).json({ error: 'Contact not found' });
     res.json(contact);
   } catch (error) {

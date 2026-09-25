@@ -68,7 +68,7 @@ const updateUser = async (req, res) => {
         if (userToUpdate.role === 'admin') {
             return res.status(403).json({ error: 'Cannot modify the Super Admin via this endpoint.' });
         }
-        const updatedUser = await User_1.User.findByIdAndUpdate(req.params.id, { name, email, role, status }, { new: true }).select('-passwordHash');
+        const updatedUser = await User_1.User.findByIdAndUpdate(req.params.id, { name, email, role, status }, { returnDocument: "after" }).select('-passwordHash');
         res.json(updatedUser);
     }
     catch (error) {

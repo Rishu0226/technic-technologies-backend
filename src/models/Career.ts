@@ -5,6 +5,7 @@ export interface IApplicationField {
   label: string;
   type: 'text' | 'email' | 'tel' | 'select' | 'file' | 'textarea';
   required: boolean;
+  active?: boolean;
 }
 
 export interface ICareer extends Document {
@@ -32,7 +33,8 @@ const ApplicationFieldSchema = new Schema<IApplicationField>({
   name: { type: String, required: true },
   label: { type: String, required: true },
   type: { type: String, enum: ['text', 'email', 'tel', 'select', 'file', 'textarea'], required: true },
-  required: { type: Boolean, default: true }
+  required: { type: Boolean, default: true },
+  active: { type: Boolean, default: true }
 }, { _id: false });
 
 const CareerSchema = new Schema<ICareer>({

@@ -38,7 +38,7 @@ export const createCareer = async (req: Request, res: Response) => {
 
 export const updateCareer = async (req: Request, res: Response) => {
   try {
-    const career = await Career.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const career = await Career.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
     if (!career) return res.status(404).json({ error: 'Job not found' });
     res.json(career);
   } catch (error) {
@@ -93,7 +93,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
     const application = await Application.findByIdAndUpdate(
       req.params.id, 
       { status, ...(notes !== undefined && { notes }) },
-      { new: true }
+      { returnDocument: "after" }
     );
     if (!application) return res.status(404).json({ error: 'Application not found' });
     res.json(application);

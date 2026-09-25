@@ -38,7 +38,7 @@ const createService = async (req, res) => {
 exports.createService = createService;
 const updateService = async (req, res) => {
     try {
-        const service = await Service_1.Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const service = await Service_1.Service.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
         if (!service)
             return res.status(404).json({ error: 'Service not found' });
         res.json(service);

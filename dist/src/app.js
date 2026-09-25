@@ -42,6 +42,8 @@ const productRoutes_1 = __importDefault(require("./routes/productRoutes"));
 const blogRoutes_1 = __importDefault(require("./routes/blogRoutes"));
 const settingsRoutes_1 = __importDefault(require("./routes/settingsRoutes"));
 const contactRoutes_1 = __importDefault(require("./routes/contactRoutes"));
+const aiRoutes_1 = __importDefault(require("./routes/aiRoutes"));
+const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 // Mount routes
 app.use('/api/auth', authRoutes_1.default);
@@ -52,4 +54,6 @@ app.use('/api', productRoutes_1.default);
 app.use('/api', blogRoutes_1.default);
 app.use('/api', settingsRoutes_1.default);
 app.use('/api', contactRoutes_1.default);
+app.use('/api/admin', aiRoutes_1.default);
+app.use('/api/admin', uploadRoutes_1.default);
 exports.default = app;

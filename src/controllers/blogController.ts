@@ -33,7 +33,7 @@ export const createBlog = async (req: Request, res: Response) => {
 
 export const updateBlog = async (req: Request, res: Response) => {
   try {
-    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
     if (!blog) return res.status(404).json({ error: 'Blog not found' });
     res.json(blog);
   } catch (error) {

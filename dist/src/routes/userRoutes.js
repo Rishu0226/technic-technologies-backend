@@ -7,13 +7,11 @@ const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const userController_1 = require("../controllers/userController");
 const router = express_1.default.Router();
-// All user management routes require authentication and 'admin' role
-router.use(authMiddleware_1.protect);
-router.use((0, authMiddleware_1.authorize)('admin'));
+// Apply middlewares directly to routes instead of router.use() to prevent leaking
 router.route('/admin/users')
-    .get(userController_1.getUsers)
-    .post(userController_1.createUser);
+    .get(authMiddleware_1.protect, (0, authMiddleware_1.authorize)('admin'), userController_1.getUsers)
+    .post(authMiddleware_1.protect, (0, authMiddleware_1.authorize)('admin'), userController_1.createUser);
 router.route('/admin/users/:id')
-    .put(userController_1.updateUser)
-    .delete(userController_1.deleteUser);
+    .put(authMiddleware_1.protect, (0, authMiddleware_1.authorize)('admin'), userController_1.updateUser)
+    .delete(authMiddleware_1.protect, (0, authMiddleware_1.authorize)('admin'), userController_1.deleteUser);
 exports.default = router;

@@ -29,7 +29,7 @@ export const updateSettings = async (req: Request, res: Response) => {
     if (!settings) {
       settings = await SiteSettings.create(req.body);
     } else {
-      settings = await SiteSettings.findByIdAndUpdate(settings._id, req.body, { new: true });
+      settings = await SiteSettings.findByIdAndUpdate(settings._id, req.body, { returnDocument: "after" });
     }
     res.json(settings);
   } catch (error) {

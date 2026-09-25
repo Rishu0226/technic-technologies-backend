@@ -33,7 +33,7 @@ export const createProduct = async (req: Request, res: Response) => {
 
 export const updateProduct = async (req: Request, res: Response) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
   } catch (error) {

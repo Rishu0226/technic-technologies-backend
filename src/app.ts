@@ -42,6 +42,8 @@ import productRoutes from './routes/productRoutes';
 import blogRoutes from './routes/blogRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import contactRoutes from './routes/contactRoutes';
+import aiRoutes from './routes/aiRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 import userRoutes from './routes/userRoutes';
 
@@ -54,5 +56,7 @@ app.use('/api', productRoutes);
 app.use('/api', blogRoutes);
 app.use('/api', settingsRoutes);
 app.use('/api', contactRoutes);
+app.use('/api/admin', aiRoutes);
+app.use('/api/admin', uploadRoutes);
 
 export default app;
