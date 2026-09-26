@@ -10,7 +10,7 @@ export function notFound(_req: Request, res: Response) {
 
 export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
   const message = error instanceof Error ? error.message : "Something went wrong";
-  console.error(message);
+  res.locals.errorMessage = message;
 
   if (res.headersSent) return;
 

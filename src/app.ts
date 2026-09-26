@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import { requestLogger } from './middleware/requestLogger';
 import { connectDatabase } from './config/db';
 
 const app = express();
@@ -50,6 +51,8 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(requestLogger);
+
 const health = (_req: express.Request, res: express.Response) => {
   const connected = mongoose.connection.readyState === 1;
   res.status(connected ? 200 : 503).json({
@@ -65,7 +68,7 @@ app.use(async (req, res, next) => {
     next();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'connection failed';
-    console.error('MongoDB connection error:', message.replace(/\/\/[^@\s/]+@/g, '//***@'));
+    res.locals.errorMessage = `MongoDB connection error: ${message.replace(/\/\/[^@\s/]+@/g, '//***@')}`;
     if (req.path === '/api/health' || req.path === '/health') {
       health(req, res);
       return;

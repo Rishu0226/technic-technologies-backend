@@ -12,12 +12,12 @@ if (!process.env.VERCEL) {
     (0, db_1.connectDatabase)()
         .then(() => {
         app_1.default.listen(port, () => {
-            console.log(`Server is running on port ${port}`);
+            console.log(`[SUCCESS] Server is running on port ${port}`);
         });
     })
         .catch((error) => {
         const message = error instanceof Error ? error.message : "connection failed";
-        console.error("MongoDB connection error:", message.replace(/\/\/[^@\s/]+@/g, "//***@"));
+        console.error(`[ERROR] MongoDB connection error: ${message.replace(/\/\/[^@\s/]+@/g, "//***@")}`);
         process.exit(1);
     });
 }
