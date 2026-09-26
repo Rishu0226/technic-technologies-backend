@@ -271,7 +271,7 @@ Required schema fields:
 | Career | `title`, `slug` (unique), `department`, `location`, `employmentType`, `experience`, `description`. Each `applicationFields[]` item needs `name`, `label`, `type` |
 | Service | `title`, `slug` (unique), `description`, `icon` |
 | Solution | `title`, `slug` (unique), `description`, `icon` |
-| Product | `name`, `slug` (unique), `tagline`, `description`, `icon` |
+| Product | `name`, `slug` (unique), `tagline`, `description`, `icon`. Optional: `shortDescription`, `longDescription` (sanitized HTML), `type` (`app`, `website`, `both`), `websiteUrl`, `playStoreUrl`, `appStoreUrl`, `category`, `heroDescription`, `heroImage`, `logo`, `dashboardImage`, `websitePreviewImage`, `gallery[]`, `features[]` (string or `{ title, description, icon }`), `metrics[]`, `benefits[]`, `technologyStack[]`, `mobileScreenshots[]`, `ctaTitle`, `ctaDescription`, `seo` |
 | Contact | `firstName`, `lastName`, `email`, `interest`, `message` |
 | Application | `applicantName`, `email`, `phone`, `experience`, `resumeUrl`, and `jobId` (set by the server from the slug) |
 | User | `name`, `email` (unique, lowercased), `password` on create (stored as `passwordHash`) |
@@ -292,7 +292,9 @@ Enums:
 
 Controllers do not enforce a transition graph. Any stored status can be replaced by any other value the update accepts. Create rejects a value outside the enum. Update does not re-run that check.
 
-Service and solution slug, on create and when `slug` is sent on update: trim, lowercase, then `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`. Failure: `400 { "error": "Slug must be lowercase words separated by hyphens." }`. Duplicate key `11000`: `400 { "error": "Slug must be unique." }`. Other models rely on the unique index and return the generic “Invalid data” on duplicates.
+Service, solution, product, blog, and career slugs, on create and when `slug` is sent on update: trim, lowercase, then `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`. Failure: `400 { "error": "Slug must be lowercase words separated by hyphens." }`. Duplicate key `11000`: `400 { "error": "Slug already exists. Please choose another slug." }`.
+
+`longDescription` on products, services, solutions, and careers, and HTML `content` on blogs, is sanitized before save. Allowed tags are headings, paragraphs, lists, links, images, tables, and basic emphasis. `script`, event handlers, and `javascript:` URLs are removed. Draft records stay off the public slug routes.
 
 Sort:
 

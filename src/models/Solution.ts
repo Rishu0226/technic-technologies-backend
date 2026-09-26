@@ -4,6 +4,7 @@ export interface ISolution extends Document {
   title: string;
   slug: string;
   shortDescription?: string;
+  longDescription?: string;
   description: string;
   icon: string;
   industry?: string;
@@ -38,6 +39,7 @@ const SolutionSchema = new Schema<ISolution>({
   title: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
   shortDescription: { type: String, default: '' },
+  longDescription: { type: String, default: '' },
   description: { type: String, required: true },
   icon: { type: String, required: true },
   industry: { type: String, default: '' },

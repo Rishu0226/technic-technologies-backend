@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { Solution } from '../models/Solution';
+import { sanitizeHtml } from '../utils/html';
+import { SLUG_DUPLICATE_ERROR } from '../utils/slug';
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -47,10 +49,11 @@ export const createSolution = async (req: Request, res: Response) => {
     if (!slugPattern.test(slug)) {
       return res.status(400).json({ error: 'Slug must be lowercase words separated by hyphens.' });
     }
-    const solution = await Solution.create({ ...req.body, slug });
+    const longDescription = typeof req.body.longDescription === 'string' ? sanitizeHtml(req.body.longDescription) : undefined;
+    const solution = await Solution.create({ ...req.body, slug, ...(longDescription !== undefined ? { longDescription } : {}) });
     res.status(201).json(solution);
   } catch (error) {
-    res.status(400).json({ error: duplicateSlug(error) ? 'Slug must be unique.' : 'Invalid data' });
+    res.status(400).json({ error: duplicateSlug(error) ? SLUG_DUPLICATE_ERROR : 'Invalid data' });
   }
 };
 
@@ -60,15 +63,17 @@ export const updateSolution = async (req: Request, res: Response) => {
     if (req.body.slug !== undefined && !slugPattern.test(slug)) {
       return res.status(400).json({ error: 'Slug must be lowercase words separated by hyphens.' });
     }
+    const payload = slug ? { ...req.body, slug } : { ...req.body };
+    if (typeof req.body.longDescription === 'string') payload.longDescription = sanitizeHtml(req.body.longDescription);
     const solution = await Solution.findByIdAndUpdate(
       req.params.id,
-      slug ? { ...req.body, slug } : req.body,
+      payload,
       { returnDocument: 'after' },
     );
     if (!solution) return res.status(404).json({ error: 'Solution not found' });
     res.json(solution);
   } catch (error) {
-    res.status(400).json({ error: duplicateSlug(error) ? 'Slug must be unique.' : 'Invalid data' });
+    res.status(400).json({ error: duplicateSlug(error) ? SLUG_DUPLICATE_ERROR : 'Invalid data' });
   }
 };
 

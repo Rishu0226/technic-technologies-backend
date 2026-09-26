@@ -3,6 +3,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateApplicationStatus = exports.getApplications = exports.submitApplication = exports.deleteCareer = exports.updateCareer = exports.createCareer = exports.getCareerBySlug = exports.getCareers = void 0;
 const Career_1 = require("../models/Career");
 const Application_1 = require("../models/Application");
+const html_1 = require("../utils/html");
+const slug_1 = require("../utils/slug");
+function prepareCareer(body, requireSlug) {
+    const hasSlug = Object.prototype.hasOwnProperty.call(body, 'slug');
+    const slug = (0, slug_1.cleanSlug)(body.slug);
+    if ((requireSlug || hasSlug) && !slug_1.slugPattern.test(slug))
+        return { error: slug_1.SLUG_FORMAT_ERROR };
+    const data = { ...body };
+    if (hasSlug)
+        data.slug = slug;
+    if (typeof data.longDescription === 'string')
+        data.longDescription = (0, html_1.sanitizeHtml)(data.longDescription);
+    return { data };
+}
 // Public endpoints
 const getCareers = async (req, res) => {
     try {
@@ -32,23 +46,29 @@ exports.getCareerBySlug = getCareerBySlug;
 // Admin endpoints
 const createCareer = async (req, res) => {
     try {
-        const career = await Career_1.Career.create(req.body);
+        const prepared = prepareCareer(req.body, true);
+        if ('error' in prepared)
+            return res.status(400).json({ error: prepared.error });
+        const career = await Career_1.Career.create(prepared.data);
         res.status(201).json(career);
     }
     catch (error) {
-        res.status(400).json({ error: 'Invalid data' });
+        res.status(400).json({ error: (0, slug_1.duplicateSlug)(error) ? slug_1.SLUG_DUPLICATE_ERROR : 'Invalid data' });
     }
 };
 exports.createCareer = createCareer;
 const updateCareer = async (req, res) => {
     try {
-        const career = await Career_1.Career.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
+        const prepared = prepareCareer(req.body, false);
+        if ('error' in prepared)
+            return res.status(400).json({ error: prepared.error });
+        const career = await Career_1.Career.findByIdAndUpdate(req.params.id, prepared.data, { returnDocument: "after" });
         if (!career)
             return res.status(404).json({ error: 'Job not found' });
         res.json(career);
     }
     catch (error) {
-        res.status(400).json({ error: 'Invalid data' });
+        res.status(400).json({ error: (0, slug_1.duplicateSlug)(error) ? slug_1.SLUG_DUPLICATE_ERROR : 'Invalid data' });
     }
 };
 exports.updateCareer = updateCareer;

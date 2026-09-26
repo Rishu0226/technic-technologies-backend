@@ -45,6 +45,7 @@ const ServiceSchema = new mongoose_1.Schema({
     slug: { type: String, required: true, unique: true },
     description: { type: String, required: true },
     shortDescription: { type: String, default: '' },
+    longDescription: { type: String, default: '' },
     icon: { type: String, required: true },
     image: { type: String, default: '' },
     heroImage: { type: String, default: '' },

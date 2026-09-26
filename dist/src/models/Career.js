@@ -51,6 +51,8 @@ const CareerSchema = new mongoose_1.Schema({
     experience: { type: String, required: true },
     experienceOptions: [{ type: String }],
     description: { type: String, required: true },
+    shortDescription: { type: String, default: '' },
+    longDescription: { type: String, default: '' },
     responsibilities: [{ type: String }],
     requirements: [{ type: String }],
     skills: [{ type: String }],

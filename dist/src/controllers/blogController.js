@@ -2,6 +2,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteBlog = exports.updateBlog = exports.createBlog = exports.getBlogBySlug = exports.getBlogs = void 0;
 const Blog_1 = require("../models/Blog");
+const html_1 = require("../utils/html");
+const slug_1 = require("../utils/slug");
+function prepareBlog(body, requireSlug) {
+    const hasSlug = Object.prototype.hasOwnProperty.call(body, 'slug');
+    const slug = (0, slug_1.cleanSlug)(body.slug);
+    if ((requireSlug || hasSlug) && !slug_1.slugPattern.test(slug))
+        return { error: slug_1.SLUG_FORMAT_ERROR };
+    const data = { ...body };
+    if (hasSlug)
+        data.slug = slug;
+    if (typeof data.content === 'string' && /<\/?[a-z][\s\S]*>/i.test(data.content)) {
+        data.content = (0, html_1.sanitizeHtml)(data.content);
+    }
+    return { data };
+}
 const getBlogs = async (req, res) => {
     try {
         const isPublic = !req.headers.authorization;
@@ -28,23 +43,29 @@ const getBlogBySlug = async (req, res) => {
 exports.getBlogBySlug = getBlogBySlug;
 const createBlog = async (req, res) => {
     try {
-        const blog = await Blog_1.Blog.create(req.body);
+        const prepared = prepareBlog(req.body, true);
+        if ('error' in prepared)
+            return res.status(400).json({ error: prepared.error });
+        const blog = await Blog_1.Blog.create(prepared.data);
         res.status(201).json(blog);
     }
     catch (error) {
-        res.status(400).json({ error: 'Invalid data' });
+        res.status(400).json({ error: (0, slug_1.duplicateSlug)(error) ? slug_1.SLUG_DUPLICATE_ERROR : 'Invalid data' });
     }
 };
 exports.createBlog = createBlog;
 const updateBlog = async (req, res) => {
     try {
-        const blog = await Blog_1.Blog.findByIdAndUpdate(req.params.id, req.body, { returnDocument: "after" });
+        const prepared = prepareBlog(req.body, false);
+        if ('error' in prepared)
+            return res.status(400).json({ error: prepared.error });
+        const blog = await Blog_1.Blog.findByIdAndUpdate(req.params.id, prepared.data, { returnDocument: "after" });
         if (!blog)
             return res.status(404).json({ error: 'Blog not found' });
         res.json(blog);
     }
     catch (error) {
-        res.status(400).json({ error: 'Invalid data' });
+        res.status(400).json({ error: (0, slug_1.duplicateSlug)(error) ? slug_1.SLUG_DUPLICATE_ERROR : 'Invalid data' });
     }
 };
 exports.updateBlog = updateBlog;

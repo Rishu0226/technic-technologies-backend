@@ -5,6 +5,7 @@ export interface IService extends Document {
   slug: string;
   description: string;
   shortDescription?: string;
+  longDescription?: string;
   icon: string;
   image?: string;
   heroImage?: string;
@@ -38,6 +39,7 @@ const ServiceSchema = new Schema<IService>({
   slug: { type: String, required: true, unique: true },
   description: { type: String, required: true },
   shortDescription: { type: String, default: '' },
+  longDescription: { type: String, default: '' },
   icon: { type: String, required: true },
   image: { type: String, default: '' },
   heroImage: { type: String, default: '' },

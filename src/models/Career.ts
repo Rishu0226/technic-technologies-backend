@@ -17,6 +17,8 @@ export interface ICareer extends Document {
   experience: string;
   experienceOptions: string[];
   description: string;
+  shortDescription?: string;
+  longDescription?: string;
   responsibilities: string[];
   requirements: string[];
   skills: string[];
@@ -46,6 +48,8 @@ const CareerSchema = new Schema<ICareer>({
   experience: { type: String, required: true },
   experienceOptions: [{ type: String }],
   description: { type: String, required: true },
+  shortDescription: { type: String, default: '' },
+  longDescription: { type: String, default: '' },
   responsibilities: [{ type: String }],
   requirements: [{ type: String }],
   skills: [{ type: String }],

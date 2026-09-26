@@ -167,6 +167,50 @@ const normalizeCareer = (raw: any) => {
 };
 
 const SERVICE_ICONS = ['Layout', 'Smartphone', 'Terminal', 'Sparkles', 'Code', 'Server', 'ShieldCheck', 'Layers', 'Cpu', 'Bot', 'Rocket'];
+const PRODUCT_ICONS = SERVICE_ICONS;
+
+const httpUrl = (value: unknown) => {
+  const text = asString(value);
+  if (!text) return '';
+  const withProtocol = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+  try {
+    const parsed = new URL(withProtocol);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
+    if (!parsed.hostname.includes('.')) return '';
+    return parsed.href;
+  } catch {
+    return '';
+  }
+};
+
+const normalizeProduct = (raw: any) => {
+  const name = asString(raw?.name);
+  const tagline = asString(raw?.tagline);
+  const description = asString(raw?.description);
+  const features = asStringArray(raw?.features);
+
+  if (!name || !tagline || !description || features.length === 0) {
+    throw new Error('AI did not return a complete product');
+  }
+
+  const requestedType = asString(raw?.type).toLowerCase();
+  const type = requestedType === 'app' || requestedType === 'both' ? requestedType : 'website';
+  const icon = asString(raw?.icon);
+
+  return {
+    name,
+    slug: slugify(asString(raw?.slug) || name),
+    tagline,
+    description,
+    features,
+    icon: PRODUCT_ICONS.includes(icon) ? icon : type === 'app' ? 'Smartphone' : 'Layout',
+    type,
+    playStoreUrl: type === 'website' ? '' : httpUrl(raw?.playStoreUrl),
+    appStoreUrl: type === 'website' ? '' : httpUrl(raw?.appStoreUrl),
+    websiteUrl: type === 'app' ? '' : httpUrl(raw?.websiteUrl),
+  };
+};
+
 const SOLUTION_ICONS = [...SERVICE_ICONS, 'HeartPulse', 'GraduationCap', 'ShoppingCart', 'Factory', 'Truck', 'Landmark'];
 
 const serviceIcon = (value: unknown, fallback = 'Code') => {
@@ -481,6 +525,59 @@ Icons must be one of: Layout, Smartphone, Terminal, Sparkles, Code, Server, Shie
     res.status(200).json({ data: generatedData });
   } catch (error: any) {
     console.error('Solution Generation Error:', error instanceof Error ? error.message : 'Server error');
+    const message = process.env.NODE_ENV === 'production'
+      ? 'AI generation failed. Try again shortly.'
+      : (error?.message || 'Server error');
+    res.status(500).json({ success: false, message, error: message });
+  }
+};
+
+export const generateProductContent = async (req: Request, res: Response) => {
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      return res.status(400).json({ error: 'Valid prompt is required' });
+    }
+
+    const systemPrompt = `You are a product writer for Technic Technologies, an enterprise software, web, and mobile company.
+Write one product card from the user's prompt.
+Respond ONLY with a JSON object. Do not add markdown fences or commentary.
+Do not include image URLs, ids, order, status, or timestamps. Images are uploaded separately.
+Do not invent statistics, client names, or download counts.
+
+Choose type from the prompt:
+- "app" when the product is a mobile application.
+- "website" when the product is a website or web product.
+- "both" when the prompt includes both a website and a mobile app.
+If the prompt could be either, use "website".
+
+Links must be copied only from URLs written in the user prompt. Never invent a Play Store, App Store, or website address. If a link is not in the prompt, return an empty string.
+- For type "app", fill playStoreUrl and appStoreUrl from the prompt and set websiteUrl to "".
+- For type "website", fill websiteUrl from the prompt and set playStoreUrl and appStoreUrl to "".
+- For type "both", fill whichever of those URLs appear in the prompt.
+
+Use this exact shape and fill every field:
+{
+  "name": "Product name",
+  "slug": "lowercase-hyphenated-slug",
+  "tagline": "One short line about the product",
+  "description": "Two or three sentences describing what the product does",
+  "features": ["4 to 6 short features"],
+  "icon": "One allowed icon name",
+  "type": "app",
+  "playStoreUrl": "",
+  "appStoreUrl": "",
+  "websiteUrl": ""
+}
+
+Icons must be one of: Layout, Smartphone, Terminal, Sparkles, Code, Server, ShieldCheck, Layers, Cpu, Bot, Rocket.
+Use Smartphone for an app and Layout for a website unless another allowed icon fits better.`;
+
+    const generatedData = normalizeProduct(await callGemini(systemPrompt, prompt.trim()));
+    res.status(200).json({ data: generatedData });
+  } catch (error: any) {
+    console.error('Product Generation Error:', error instanceof Error ? error.message : 'Server error');
     const message = process.env.NODE_ENV === 'production'
       ? 'AI generation failed. Try again shortly.'
       : (error?.message || 'Server error');

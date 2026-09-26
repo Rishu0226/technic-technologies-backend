@@ -35,15 +35,56 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Product = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const named = {
+    title: { type: String, default: '' },
+    description: { type: String, default: '' },
+    icon: { type: String, default: '' },
+};
 const ProductSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     tagline: { type: String, required: true },
+    shortDescription: { type: String, default: '' },
     description: { type: String, required: true },
-    features: [{ type: String }],
+    longDescription: { type: String, default: '' },
+    category: { type: String, default: '' },
+    heroDescription: { type: String, default: '' },
+    heroImage: { type: String, default: '' },
+    logo: { type: String, default: '' },
+    dashboardImage: { type: String, default: '' },
+    websitePreviewImage: { type: String, default: '' },
+    gallery: { type: [String], default: undefined },
+    featureSectionTitle: { type: String, default: '' },
+    featureSectionDescription: { type: String, default: '' },
+    showcaseTitle: { type: String, default: '' },
+    showcaseDescription: { type: String, default: '' },
+    features: { type: [mongoose_1.Schema.Types.Mixed], default: [] },
+    metrics: {
+        type: [{ value: { type: String, default: '' }, label: { type: String, default: '' } }],
+        default: undefined,
+    },
+    benefits: { type: [named], default: undefined },
+    technologyStack: {
+        type: [{ name: { type: String, default: '' }, icon: { type: String, default: '' } }],
+        default: undefined,
+    },
+    mobileScreenshots: {
+        type: [{ image: { type: String, default: '' }, platform: { type: String, default: '' } }],
+        default: undefined,
+    },
+    ctaTitle: { type: String, default: '' },
+    ctaDescription: { type: String, default: '' },
     icon: { type: String, required: true },
     image: { type: String },
+    type: { type: String, enum: ['app', 'website', 'both'] },
+    playStoreUrl: { type: String, default: '' },
+    appStoreUrl: { type: String, default: '' },
+    websiteUrl: { type: String, default: '' },
+    seo: {
+        metaTitle: { type: String, default: '' },
+        metaDescription: { type: String, default: '' },
+    },
     order: { type: Number, default: 0 },
-    status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' }
+    status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },
 }, { timestamps: true });
 exports.Product = mongoose_1.default.model('Product', ProductSchema);
