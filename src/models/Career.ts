@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IApplicationField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'select' | 'file' | 'textarea';
+  type: 'text' | 'email' | 'tel' | 'select' | 'file' | 'textarea' | 'link';
   required: boolean;
   active?: boolean;
 }
@@ -34,7 +34,7 @@ export interface ICareer extends Document {
 const ApplicationFieldSchema = new Schema<IApplicationField>({
   name: { type: String, required: true },
   label: { type: String, required: true },
-  type: { type: String, enum: ['text', 'email', 'tel', 'select', 'file', 'textarea'], required: true },
+  type: { type: String, enum: ['text', 'email', 'tel', 'select', 'file', 'textarea', 'link'], required: true },
   required: { type: Boolean, default: true },
   active: { type: Boolean, default: true }
 }, { _id: false });

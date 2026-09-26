@@ -1,13 +1,21 @@
 import { Request, Response } from 'express';
 import { Service } from '../models/Service';
 import { sanitizeHtml } from '../utils/html';
+import { toPublic } from '../utils/public';
 import { SLUG_DUPLICATE_ERROR } from '../utils/slug';
 
-export const getServices = async (req: Request, res: Response) => {
+export const getServices = async (_req: Request, res: Response) => {
   try {
-    const isPublic = !req.headers.authorization;
-    const filter: any = isPublic ? { status: 'Published' } : {};
-    const services = await Service.find(filter).sort({ order: 1, createdAt: -1 });
+    const services = await Service.find({ status: 'Published' }).sort({ order: 1, createdAt: -1 });
+    res.json(toPublic(services));
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const getAdminServices = async (_req: Request, res: Response) => {
+  try {
+    const services = await Service.find().sort({ order: 1, createdAt: -1 });
     res.json(services);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -24,7 +32,7 @@ export const getServiceBySlug = async (req: Request, res: Response) => {
   try {
     const service = await Service.findOne({ slug: req.params.slug, status: 'Published' });
     if (!service) return res.status(404).json({ error: 'Service not found' });
-    res.json(service);
+    res.json(toPublic(service));
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

@@ -9,10 +9,12 @@ const validateObjectId_1 = require("../middleware/validateObjectId");
 const productController_1 = require("../controllers/productController");
 const router = express_1.default.Router();
 (0, validateObjectId_1.validateObjectId)(router);
-// Public routes
+// Public routes — published records only, no token
 router.get('/products', productController_1.getProducts);
 router.get('/products/:slug', productController_1.getProductBySlug);
 // Admin routes (Protected)
+router.get('/admin/products', authMiddleware_1.protect, productController_1.getAdminProducts);
+router.get('/admin/products/:id', authMiddleware_1.protect, productController_1.getProductById);
 router.post('/admin/products', authMiddleware_1.protect, productController_1.createProduct);
 router.put('/admin/products/:id', authMiddleware_1.protect, productController_1.updateProduct);
 router.delete('/admin/products/:id', authMiddleware_1.protect, productController_1.deleteProduct);

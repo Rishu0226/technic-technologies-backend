@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { SiteSettings } from '../models/SiteSettings';
+import { toPublic } from '../utils/public';
 
 export const getSettings = async (req: Request, res: Response) => {
   try {
@@ -17,7 +18,7 @@ export const getSettings = async (req: Request, res: Response) => {
         footerInformation: '© 2026 Technic Technologies. All rights reserved.'
       });
     }
-    res.json(settings);
+    res.json(toPublic(settings));
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }

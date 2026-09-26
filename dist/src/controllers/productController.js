@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductBySlug = exports.getProducts = void 0;
+exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductById = exports.getProductBySlug = exports.getAdminProducts = exports.getProducts = void 0;
 const Product_1 = require("../models/Product");
 const html_1 = require("../utils/html");
+const public_1 = require("../utils/public");
 const slug_1 = require("../utils/slug");
 function text(value) {
     return typeof value === 'string' ? value.trim() : '';
@@ -112,21 +113,41 @@ function prepareProduct(body, { requireSlug }) {
     }
     return { data };
 }
-const getProducts = async (req, res) => {
+const getProducts = async (_req, res) => {
     try {
-        const isPublic = !req.headers.authorization;
-        const filter = isPublic ? { status: 'Published' } : {};
-        const products = await Product_1.Product.find(filter).sort({ order: 1, createdAt: -1 });
-        res.json(products);
+        const products = await Product_1.Product.find({ status: 'Published' }).sort({ order: 1, createdAt: -1 });
+        res.json((0, public_1.toPublic)(products));
     }
     catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
 };
 exports.getProducts = getProducts;
+const getAdminProducts = async (_req, res) => {
+    try {
+        const products = await Product_1.Product.find().sort({ order: 1, createdAt: -1 });
+        res.json(products);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+exports.getAdminProducts = getAdminProducts;
 const getProductBySlug = async (req, res) => {
     try {
         const product = await Product_1.Product.findOne({ slug: req.params.slug, status: 'Published' });
+        if (!product)
+            return res.status(404).json({ error: 'Product not found' });
+        res.json((0, public_1.toPublic)(product));
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+exports.getProductBySlug = getProductBySlug;
+const getProductById = async (req, res) => {
+    try {
+        const product = await Product_1.Product.findById(req.params.id);
         if (!product)
             return res.status(404).json({ error: 'Product not found' });
         res.json(product);
@@ -135,7 +156,7 @@ const getProductBySlug = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
-exports.getProductBySlug = getProductBySlug;
+exports.getProductById = getProductById;
 const createProduct = async (req, res) => {
     try {
         const prepared = prepareProduct(req.body, { requireSlug: true });

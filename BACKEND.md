@@ -139,13 +139,19 @@ Missing `JWT_SECRET` while verifying: `500` “Server authentication is not conf
 
 There is no register, refresh, OTP, forgot-password, or email-verification route.
 
-### Public list filter
+### Public and admin reads
 
-`GET /api/blogs`, `/api/careers`, `/api/services`, `/api/products`, and `/api/solutions` treat the caller as public when the `Authorization` header is absent, and then return only `status: "Published"`.
+Public reads never look at `Authorization`. They return only `status: "Published"` and omit `__v`, `password`, `passwordHash`, `resetToken`, and `internalNotes`.
 
-If the header is present, they return every status. They do not verify the JWT on those list routes. The public site must not send `Authorization`. The admin must send it if the list should include drafts.
+| Access | Routes | Authentication |
+| --- | --- | --- |
+| PUBLIC | `GET /api/products`, `GET /api/products/:slug`, and the same list and slug routes for services, solutions, blogs, and careers | None |
+| PUBLIC | `GET /api/settings` | None |
+| PUBLIC | `POST /api/contact`, `POST /api/careers/:slug/applications` | None. These are submissions, not admin actions |
+| AUTHENTICATED ADMIN | `GET /api/admin/products`, `GET /api/admin/products/:id`, and the same list and id routes for services, solutions, blogs, and careers | Bearer token via `protect` |
+| AUTHENTICATED ADMIN | `POST`, `PUT`, `DELETE` under `/api/admin/*` | Bearer token via `protect` |
 
-Slug detail routes always require `status: "Published"`, even if a token is sent. Drafts and `Closed` jobs are not available by slug.
+A token on a public read does not reveal drafts. Drafts are available only from the admin routes. Slug routes return 404 when the record is missing or not published. Admin routes without a token return 401. A valid token with the wrong role on `/api/admin/users` returns 403.
 
 ---
 
@@ -190,33 +196,41 @@ Prefixes are fully resolved.
 | POST | `/api/admin/users` | `createUser` | Admin role | Create editor or viewer |
 | PUT | `/api/admin/users/:id` | `updateUser` | Admin role | Update name, email, role, status |
 | DELETE | `/api/admin/users/:id` | `deleteUser` | Admin role | Delete a non-admin |
-| GET | `/api/blogs` | `getBlogs` | Public; header changes the filter | List blogs |
-| GET | `/api/blogs/:slug` | `getBlogBySlug` | Public | Published blog |
+| GET | `/api/blogs` | `getBlogs` | PUBLIC | Published blogs only |
+| GET | `/api/blogs/:slug` | `getBlogBySlug` | PUBLIC | One published blog |
+| GET | `/api/admin/blogs` | `getAdminBlogs` | Token | All blogs, including drafts |
+| GET | `/api/admin/blogs/:id` | `getBlogById` | Token | One blog, any status |
 | POST | `/api/admin/blogs` | `createBlog` | Token | Create blog |
 | PUT | `/api/admin/blogs/:id` | `updateBlog` | Token | Replace blog fields |
 | DELETE | `/api/admin/blogs/:id` | `deleteBlog` | Token | Delete blog |
-| GET | `/api/careers` | `getCareers` | Public; header changes the filter | List jobs |
-| GET | `/api/careers/:slug` | `getCareerBySlug` | Public | Published job |
-| POST | `/api/careers/:slug/applications` | `submitApplication` | Public | Apply |
+| GET | `/api/careers` | `getCareers` | PUBLIC | Published jobs only |
+| GET | `/api/careers/:slug` | `getCareerBySlug` | PUBLIC | One published job |
+| POST | `/api/careers/:slug/applications` | `submitApplication` | PUBLIC | Apply |
+| GET | `/api/admin/careers` | `getAdminCareers` | Token | All jobs, including drafts |
+| GET | `/api/admin/careers/:id` | `getCareerById` | Token | One job, any status |
 | POST | `/api/admin/careers` | `createCareer` | Token | Create job |
 | PUT | `/api/admin/careers/:id` | `updateCareer` | Token | Update job |
 | DELETE | `/api/admin/careers/:id` | `deleteCareer` | Token | Delete job |
 | GET | `/api/admin/applications` | `getApplications` | Token | List applications |
 | PUT | `/api/admin/applications/:id/status` | `updateApplicationStatus` | Token | Status and notes |
-| GET | `/api/services` | `getServices` | Public; header changes the filter | List services |
-| GET | `/api/services/:slug` | `getServiceBySlug` | Public | Published service |
+| GET | `/api/services` | `getServices` | PUBLIC | Published services only |
+| GET | `/api/services/:slug` | `getServiceBySlug` | PUBLIC | One published service |
+| GET | `/api/admin/services` | `getAdminServices` | Token | All services, including drafts |
 | GET | `/api/admin/services/:id` | `getServiceById` | Token | Any status, by id |
 | POST | `/api/admin/services` | `createService` | Token | Create service |
 | PUT | `/api/admin/services/:id` | `updateService` | Token | Update service |
 | DELETE | `/api/admin/services/:id` | `deleteService` | Token | Delete service |
-| GET | `/api/solutions` | `getSolutions` | Public; header changes the filter | List solutions |
-| GET | `/api/solutions/:slug` | `getSolutionBySlug` | Public | Published solution |
+| GET | `/api/solutions` | `getSolutions` | PUBLIC | Published solutions only |
+| GET | `/api/solutions/:slug` | `getSolutionBySlug` | PUBLIC | One published solution |
+| GET | `/api/admin/solutions` | `getAdminSolutions` | Token | All solutions, including drafts |
 | GET | `/api/admin/solutions/:id` | `getSolutionById` | Token | Any status, by id |
 | POST | `/api/admin/solutions` | `createSolution` | Token | Create solution |
 | PUT | `/api/admin/solutions/:id` | `updateSolution` | Token | Update solution |
 | DELETE | `/api/admin/solutions/:id` | `deleteSolution` | Token | Delete solution |
-| GET | `/api/products` | `getProducts` | Public; header changes the filter | List products |
-| GET | `/api/products/:slug` | `getProductBySlug` | Public | Published product |
+| GET | `/api/products` | `getProducts` | PUBLIC | Published products only |
+| GET | `/api/products/:slug` | `getProductBySlug` | PUBLIC | One published product |
+| GET | `/api/admin/products` | `getAdminProducts` | Token | All products, including drafts |
+| GET | `/api/admin/products/:id` | `getProductById` | Token | One product, any status |
 | POST | `/api/admin/products` | `createProduct` | Token | Create product |
 | PUT | `/api/admin/products/:id` | `updateProduct` | Token | Update product |
 | DELETE | `/api/admin/products/:id` | `deleteProduct` | Token | Delete product |
@@ -426,7 +440,7 @@ This section lists which apps call which backend routes. It is not a frontend sp
 
 ### Public site (`technic-technologies`)
 
-The public client does not send `Authorization`, so list routes return published rows only.
+The public client does not send `Authorization`. Public list and slug routes always return published rows only.
 
 | Page | Method | Endpoint |
 | --- | --- | --- |
@@ -443,26 +457,26 @@ The public client does not send `Authorization`, so list routes return published
 | Career detail | GET | `/api/careers/:slug` |
 | Career application | POST | `/api/careers/:slug/applications` |
 
-The public product cards do not call `GET /api/products/:slug`.
+Product detail uses `GET /api/products/:slug`.
 
 ### Admin (`technic-technologies-admin`)
 
-The admin sends `Authorization: Bearer` from its cookie, so the list routes include drafts.
+The admin sends `Authorization: Bearer` from its cookie on `/api/admin/*`. Those list routes include drafts. Public catalog routes are not used for editing.
 
 | Screen | Method | Endpoint |
 | --- | --- | --- |
 | Login | POST | `/api/auth/login` |
 | Logout | POST | `/api/auth/logout` |
-| Dashboard counts | GET | `/api/careers`, `/api/blogs`, `/api/services`, `/api/products`, `/api/admin/contacts` |
-| Blogs | GET, POST, PUT, DELETE | `/api/blogs`, `/api/admin/blogs`, `/api/admin/blogs/:id` |
+| Dashboard counts | GET | `/api/admin/careers`, `/api/admin/blogs`, `/api/admin/services`, `/api/admin/products`, `/api/admin/contacts` |
+| Blogs | GET, POST, PUT, DELETE | `/api/admin/blogs`, `/api/admin/blogs/:id` |
 | Blog AI | POST | `/api/admin/ai/generate-blog` |
-| Careers | GET, POST, PUT, DELETE | `/api/careers`, `/api/admin/careers`, `/api/admin/careers/:id` |
+| Careers | GET, POST, PUT, DELETE | `/api/admin/careers`, `/api/admin/careers/:id` |
 | Career AI | POST | `/api/admin/ai/generate-career` |
-| Services | GET, POST, PUT, DELETE | `/api/services`, `/api/admin/services`, `/api/admin/services/:id` |
+| Services | GET, POST, PUT, DELETE | `/api/admin/services`, `/api/admin/services/:id` |
 | Service AI | POST | `/api/admin/ai/generate-service` |
-| Solutions | GET, POST, PUT, DELETE | `/api/solutions`, `/api/admin/solutions`, `/api/admin/solutions/:id` |
+| Solutions | GET, POST, PUT, DELETE | `/api/admin/solutions`, `/api/admin/solutions/:id` |
 | Solution AI | POST | `/api/admin/ai/generate-solution` |
-| Products | GET, POST, PUT, DELETE | `/api/products`, `/api/admin/products`, `/api/admin/products/:id` |
+| Products | GET, POST, PUT, DELETE | `/api/admin/products`, `/api/admin/products/:id` |
 | Applications | GET, PUT | `/api/admin/applications`, `/api/admin/applications/:id/status` |
 | Contacts list and delete | GET, DELETE | `/api/admin/contacts`, `/api/admin/contacts/:id` |
 | Contact status in the current admin page | PUT | `/api/admin/contacts/:id` — **this path is not implemented** |
@@ -482,7 +496,7 @@ Not called by either client: `/health`, `/api/health`, `/api/auth/setup`, all `/
 ```text
 Browser (no Authorization)
   → GET /api/{blogs|careers|services|products|solutions}
-  → controller sets status Published
+  → controller queries status Published only
   → JSON array
 ```
 
@@ -502,7 +516,7 @@ No email, no WhatsApp send. WhatsApp is only a string on settings.
 
 ```text
 POST /api/careers/:slug/applications
-  → career by slug, any status
+  → published career by slug
   → Application.create(body + jobId)
   → 201 { message, id } or 400
 ```

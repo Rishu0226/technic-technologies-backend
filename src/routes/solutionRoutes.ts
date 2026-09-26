@@ -3,6 +3,7 @@ import { protect } from '../middleware/authMiddleware';
 import { validateObjectId } from '../middleware/validateObjectId';
 import {
   getSolutions,
+  getAdminSolutions,
   getSolutionBySlug,
   getSolutionById,
   createSolution,
@@ -16,6 +17,7 @@ validateObjectId(router);
 router.get('/solutions', getSolutions);
 router.get('/solutions/:slug', getSolutionBySlug);
 
+router.get('/admin/solutions', protect, getAdminSolutions);
 router.get('/admin/solutions/:id', protect, getSolutionById);
 router.post('/admin/solutions', protect, createSolution);
 router.put('/admin/solutions/:id', protect, updateSolution);

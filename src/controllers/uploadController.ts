@@ -6,15 +6,21 @@ import { AuthRequest } from "../middleware/authMiddleware";
 
 const FOLDERS = new Set(["blogs", "products", "services", "solutions", "media"]);
 
-function uploadBuffer(buffer: Buffer, folder: string, filename: string) {
+function uploadBuffer(
+  buffer: Buffer,
+  folder: string,
+  filename: string,
+  resourceType: "auto" | "image" | "raw" = "auto",
+) {
   return new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: `technic/${folder}`,
-        resource_type: "auto",
+        resource_type: resourceType,
         use_filename: true,
         unique_filename: true,
         filename_override: filename.replace(/\.[^.]+$/, ""),
+        ...(resourceType === "image" ? { format: "pdf" } : {}),
       },
       (error, result) => {
         if (error || !result) {
@@ -26,6 +32,15 @@ function uploadBuffer(buffer: Buffer, folder: string, filename: string) {
     );
     Readable.from(buffer).pipe(stream);
   });
+}
+
+export async function uploadPublicResume(file: { buffer: Buffer; originalname: string; mimetype: string }) {
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    throw new Error("Cloudinary is not configured.");
+  }
+  const pdf = file.mimetype === "application/pdf" || /\.pdf$/i.test(file.originalname);
+  const uploaded = await uploadBuffer(file.buffer, "resumes", file.originalname, pdf ? "image" : "raw");
+  return uploaded.secure_url;
 }
 
 export const uploadAsset = async (req: AuthRequest, res: Response) => {

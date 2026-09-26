@@ -1,21 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteService = exports.updateService = exports.createService = exports.getServiceById = exports.getServiceBySlug = exports.getServices = void 0;
+exports.deleteService = exports.updateService = exports.createService = exports.getServiceById = exports.getServiceBySlug = exports.getAdminServices = exports.getServices = void 0;
 const Service_1 = require("../models/Service");
 const html_1 = require("../utils/html");
+const public_1 = require("../utils/public");
 const slug_1 = require("../utils/slug");
-const getServices = async (req, res) => {
+const getServices = async (_req, res) => {
     try {
-        const isPublic = !req.headers.authorization;
-        const filter = isPublic ? { status: 'Published' } : {};
-        const services = await Service_1.Service.find(filter).sort({ order: 1, createdAt: -1 });
-        res.json(services);
+        const services = await Service_1.Service.find({ status: 'Published' }).sort({ order: 1, createdAt: -1 });
+        res.json((0, public_1.toPublic)(services));
     }
     catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
 };
 exports.getServices = getServices;
+const getAdminServices = async (_req, res) => {
+    try {
+        const services = await Service_1.Service.find().sort({ order: 1, createdAt: -1 });
+        res.json(services);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+exports.getAdminServices = getAdminServices;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 function cleanSlug(value) {
     return typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -25,7 +34,7 @@ const getServiceBySlug = async (req, res) => {
         const service = await Service_1.Service.findOne({ slug: req.params.slug, status: 'Published' });
         if (!service)
             return res.status(404).json({ error: 'Service not found' });
-        res.json(service);
+        res.json((0, public_1.toPublic)(service));
     }
     catch (error) {
         res.status(500).json({ error: 'Server error' });

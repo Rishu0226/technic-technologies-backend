@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateSettings = exports.getSettings = void 0;
 const SiteSettings_1 = require("../models/SiteSettings");
+const public_1 = require("../utils/public");
 const getSettings = async (req, res) => {
     try {
         const settings = await SiteSettings_1.SiteSettings.findOne();
@@ -18,7 +19,7 @@ const getSettings = async (req, res) => {
                 footerInformation: '© 2026 Technic Technologies. All rights reserved.'
             });
         }
-        res.json(settings);
+        res.json((0, public_1.toPublic)(settings));
     }
     catch (error) {
         res.status(500).json({ error: 'Server error' });

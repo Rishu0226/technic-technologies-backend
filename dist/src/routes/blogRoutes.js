@@ -9,10 +9,12 @@ const validateObjectId_1 = require("../middleware/validateObjectId");
 const blogController_1 = require("../controllers/blogController");
 const router = express_1.default.Router();
 (0, validateObjectId_1.validateObjectId)(router);
-// Public routes
+// Public routes — published records only, no token
 router.get('/blogs', blogController_1.getBlogs);
 router.get('/blogs/:slug', blogController_1.getBlogBySlug);
 // Admin routes (Protected)
+router.get('/admin/blogs', authMiddleware_1.protect, blogController_1.getAdminBlogs);
+router.get('/admin/blogs/:id', authMiddleware_1.protect, blogController_1.getBlogById);
 router.post('/admin/blogs', authMiddleware_1.protect, blogController_1.createBlog);
 router.put('/admin/blogs/:id', authMiddleware_1.protect, blogController_1.updateBlog);
 router.delete('/admin/blogs/:id', authMiddleware_1.protect, blogController_1.deleteBlog);

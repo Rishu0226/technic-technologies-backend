@@ -38,7 +38,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const ApplicationFieldSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     label: { type: String, required: true },
-    type: { type: String, enum: ['text', 'email', 'tel', 'select', 'file', 'textarea'], required: true },
+    type: { type: String, enum: ['text', 'email', 'tel', 'select', 'file', 'textarea', 'link'], required: true },
     required: { type: Boolean, default: true },
     active: { type: Boolean, default: true }
 }, { _id: false });

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Solution } from '../models/Solution';
 import { sanitizeHtml } from '../utils/html';
+import { toPublic } from '../utils/public';
 import { SLUG_DUPLICATE_ERROR } from '../utils/slug';
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -13,10 +14,18 @@ function duplicateSlug(error: unknown) {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
 }
 
-export const getSolutions = async (req: Request, res: Response) => {
+export const getSolutions = async (_req: Request, res: Response) => {
   try {
-    const isPublic = !req.headers.authorization;
-    const solutions = await Solution.find(isPublic ? { status: 'Published' } : {}).sort({ order: 1, createdAt: -1 });
+    const solutions = await Solution.find({ status: 'Published' }).sort({ order: 1, createdAt: -1 });
+    res.json(toPublic(solutions));
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const getAdminSolutions = async (_req: Request, res: Response) => {
+  try {
+    const solutions = await Solution.find().sort({ order: 1, createdAt: -1 });
     res.json(solutions);
   } catch {
     res.status(500).json({ error: 'Server error' });
@@ -27,7 +36,7 @@ export const getSolutionBySlug = async (req: Request, res: Response) => {
   try {
     const solution = await Solution.findOne({ slug: req.params.slug, status: 'Published' });
     if (!solution) return res.status(404).json({ error: 'Solution not found' });
-    res.json(solution);
+    res.json(toPublic(solution));
   } catch {
     res.status(500).json({ error: 'Server error' });
   }

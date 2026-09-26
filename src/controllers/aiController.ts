@@ -1,9 +1,19 @@
 import { Request, Response } from 'express';
+import { sanitizeHtml } from '../utils/html';
 
 const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash'];
 
 const asString = (value: unknown, fallback = '') =>
   typeof value === 'string' ? value.trim() : fallback;
+
+const plainText = (value: unknown) => asString(value).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+const richHtml = (value: unknown, fallback = '') => {
+  const html = sanitizeHtml(asString(value));
+  if (html) return html;
+  const text = plainText(fallback);
+  return text ? `<p>${text}</p>` : '';
+};
 
 const asStringArray = (value: unknown) =>
   Array.isArray(value)
@@ -113,8 +123,8 @@ const callGemini = async (systemPrompt: string, userPrompt: string) => {
 
 const normalizeBlog = (raw: any) => {
   const title = asString(raw?.title);
-  const excerpt = asString(raw?.excerpt);
-  const content = asString(raw?.content);
+  const excerpt = plainText(raw?.shortDescription || raw?.excerpt);
+  const content = richHtml(raw?.longDescription || raw?.content, excerpt);
 
   if (!title || !excerpt || !content) {
     throw new Error('AI did not return a complete blog');
@@ -159,6 +169,8 @@ const normalizeCareer = (raw: any) => {
     experience: asString(raw?.experience) || '3-5 Years',
     experienceOptions: experienceOptions.length > 0 ? experienceOptions : ['0-2 Years', '3-5 Years', '5+ Years'],
     description,
+    shortDescription: plainText(raw?.shortDescription) || description.slice(0, 180),
+    longDescription: richHtml(raw?.longDescription, description),
     responsibilities,
     requirements,
     skills,
@@ -202,6 +214,8 @@ const normalizeProduct = (raw: any) => {
     slug: slugify(asString(raw?.slug) || name),
     tagline,
     description,
+    shortDescription: plainText(raw?.shortDescription) || description.slice(0, 180),
+    longDescription: richHtml(raw?.longDescription, description),
     features,
     icon: PRODUCT_ICONS.includes(icon) ? icon : type === 'app' ? 'Smartphone' : 'Layout',
     type,
@@ -275,7 +289,8 @@ const normalizeService = (raw: any) => {
   return {
     title,
     slug: slugify(asString(raw?.slug) || title),
-    shortDescription: asString(raw?.shortDescription) || description.slice(0, 180),
+    shortDescription: plainText(raw?.shortDescription) || description.slice(0, 180),
+    longDescription: richHtml(raw?.longDescription, description),
     description,
     icon: serviceIcon(raw?.icon, 'Code'),
     heroEyebrow: asString(raw?.heroEyebrow) || 'Service',
@@ -322,7 +337,8 @@ Use this exact shape and fill every field:
 {
   "title": "Service name",
   "slug": "lowercase-hyphenated-slug",
-  "shortDescription": "One or two sentences for the service card",
+  "shortDescription": "One or two plain-text sentences for the service card. No HTML.",
+  "longDescription": "<h2>Overview</h2><p>Two sentences.</p><h3>What is included</h3><ul><li>Point one</li><li>Point two</li></ul><p>Closing paragraph.</p>",
   "description": "Three or four sentences describing the service",
   "icon": "One of Layout, Smartphone, Terminal, Sparkles, Code, Server, ShieldCheck, Layers, Cpu, Bot, Rocket",
   "heroEyebrow": "Service",
@@ -363,6 +379,7 @@ Use this exact shape and fill every field:
   }
 }
 
+longDescription must be HTML, not Markdown. Use only h2, h3, p, ul, ol, li, strong, and em. Include one h2, at least two paragraphs, and one list. Do not include script tags or image URLs.
 Include 4 benefits, 6 features, 6 to 8 technologies, 6 process steps, 5 to 7 deliverables, 4 use cases, and 4 FAQs.
 Process steps should be Discover, Design, Develop, Test, Launch, and Scale, written specifically for this service.
 Icons must be one of: Layout, Smartphone, Terminal, Sparkles, Code, Server, ShieldCheck, Layers, Cpu, Bot, Rocket.`;
@@ -430,7 +447,8 @@ const normalizeSolution = (raw: any) => {
   return {
     title,
     slug: slugify(asString(raw?.slug) || title),
-    shortDescription: asString(raw?.shortDescription) || description.slice(0, 180),
+    shortDescription: plainText(raw?.shortDescription) || description.slice(0, 180),
+    longDescription: richHtml(raw?.longDescription, description),
     description,
     industry: asString(raw?.industry),
     icon: solutionIcon(raw?.icon, 'Layers'),
@@ -477,7 +495,8 @@ Use this exact shape and fill every field:
 {
   "title": "Industry Solutions",
   "slug": "lowercase-hyphenated-slug",
-  "shortDescription": "One or two sentences for the industry card",
+  "shortDescription": "One or two plain-text sentences for the industry card. No HTML.",
+  "longDescription": "<h2>Overview</h2><p>Two sentences.</p><h3>How it helps</h3><ul><li>Point one</li><li>Point two</li></ul><p>Closing paragraph.</p>",
   "description": "Three or four sentences describing the solution",
   "industry": "Industry name",
   "icon": "One allowed icon name",
@@ -517,6 +536,7 @@ Use this exact shape and fill every field:
   }
 }
 
+longDescription must be HTML, not Markdown. Use only h2, h3, p, ul, ol, li, strong, and em. Include one h2, at least two paragraphs, and one list. Do not include script tags or image URLs.
 Include 4 benefits, 4 features, 3 use cases, 5 process steps, 6 to 8 technologies, and 4 FAQs.
 Process steps must be Understand, Plan, Develop, Deploy, and Support, written specifically for this industry.
 Icons must be one of: Layout, Smartphone, Terminal, Sparkles, Code, Server, ShieldCheck, Layers, Cpu, Bot, Rocket, HeartPulse, GraduationCap, ShoppingCart, Factory, Truck, Landmark.`;
@@ -562,7 +582,9 @@ Use this exact shape and fill every field:
   "name": "Product name",
   "slug": "lowercase-hyphenated-slug",
   "tagline": "One short line about the product",
+  "shortDescription": "One or two plain-text sentences for the product card. No HTML.",
   "description": "Two or three sentences describing what the product does",
+  "longDescription": "<h2>Overview</h2><p>Two sentences.</p><h3>Capabilities</h3><ul><li>Point one</li><li>Point two</li></ul><p>Closing paragraph.</p>",
   "features": ["4 to 6 short features"],
   "icon": "One allowed icon name",
   "type": "app",
@@ -571,6 +593,7 @@ Use this exact shape and fill every field:
   "websiteUrl": ""
 }
 
+longDescription must be HTML, not Markdown. Use only h2, h3, p, ul, ol, li, strong, and em. Include one h2, at least two paragraphs, and one list. Do not include script tags or image URLs.
 Icons must be one of: Layout, Smartphone, Terminal, Sparkles, Code, Server, ShieldCheck, Layers, Cpu, Bot, Rocket.
 Use Smartphone for an app and Layout for a website unless another allowed icon fits better.`;
 
@@ -601,8 +624,10 @@ Use this exact shape and fill every field:
 {
   "title": "Compelling SEO title",
   "slug": "lowercase-hyphenated-slug",
-  "excerpt": "One or two sentences that summarize the article",
-  "content": "Full article in Markdown. Include an introduction, at least three ## sections, short paragraphs, and a bullet list where it helps. Do not wrap the article in a code fence.",
+  "shortDescription": "One or two plain-text sentences for the article card. No HTML.",
+  "excerpt": "Same text as shortDescription",
+  "longDescription": "<h2>Section title</h2><p>Introduction paragraph.</p><h2>Next section</h2><p>Paragraph.</p><ul><li>Point</li><li>Point</li></ul><h2>Closing</h2><p>Final paragraph.</p>",
+  "content": "Same HTML as longDescription",
   "author": "Technic Team",
   "category": "One category such as Technology, AI, Engineering, or Product",
   "tags": ["4 to 6 short tags"],
@@ -612,7 +637,7 @@ Use this exact shape and fill every field:
   }
 }
 
-Do not include image URLs, ids, status, or timestamps.`;
+The article body must be HTML, not Markdown. Use only h2, h3, p, ul, ol, li, strong, and em. Include at least three h2 sections, several paragraphs, and one list. Do not include script tags, image URLs, ids, status, or timestamps.`;
 
     const generatedData = normalizeBlog(await callGemini(systemPrompt, prompt.trim()));
     res.status(200).json({ data: generatedData });
@@ -646,13 +671,16 @@ Use this exact shape and fill every field:
   "employmentType": "Full-time, Part-time, Contract, or Internship",
   "experience": "Short display string such as 3-5 Years",
   "experienceOptions": ["0-2 Years", "3-5 Years", "5+ Years"],
+  "shortDescription": "One or two plain-text sentences for the job preview. No HTML.",
   "description": "Three or four sentences about the role and why it matters at Technic Technologies.",
+  "longDescription": "<h2>About the role</h2><p>Two sentences.</p><h3>What you will do</h3><ul><li>Responsibility</li><li>Responsibility</li></ul><h3>What you bring</h3><ul><li>Requirement</li><li>Requirement</li></ul>",
   "responsibilities": ["5 to 8 specific responsibilities"],
   "requirements": ["5 to 8 specific requirements"],
   "skills": ["6 to 10 skills"],
   "salary": "A realistic range or Competitive"
 }
 
+shortDescription is plain text. longDescription must be HTML, not Markdown. Use only h2, h3, p, ul, ol, li, strong, and em. Do not include script tags.
 experienceOptions are the dropdown choices an applicant can pick. Include the role's level and nearby levels.
 Do not include ids, application form fields, email addresses, status, or timestamps.`;
 

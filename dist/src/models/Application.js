@@ -41,7 +41,7 @@ const ApplicationSchema = new mongoose_1.Schema({
     email: { type: String, required: true },
     phone: { type: String, required: true },
     experience: { type: String, required: true },
-    resumeUrl: { type: String, required: true },
+    resumeUrl: { type: String, default: '' },
     fields: { type: mongoose_1.Schema.Types.Mixed }, // For any dynamic fields
     status: { type: String, enum: ['New', 'Reviewing', 'Shortlisted', 'Interview', 'Rejected', 'Hired'], default: 'New' },
     notes: { type: String },

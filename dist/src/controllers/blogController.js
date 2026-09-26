@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBlog = exports.updateBlog = exports.createBlog = exports.getBlogBySlug = exports.getBlogs = void 0;
+exports.deleteBlog = exports.updateBlog = exports.createBlog = exports.getBlogById = exports.getBlogBySlug = exports.getAdminBlogs = exports.getBlogs = void 0;
 const Blog_1 = require("../models/Blog");
 const html_1 = require("../utils/html");
+const public_1 = require("../utils/public");
 const slug_1 = require("../utils/slug");
 function prepareBlog(body, requireSlug) {
     const hasSlug = Object.prototype.hasOwnProperty.call(body, 'slug');
@@ -17,21 +18,41 @@ function prepareBlog(body, requireSlug) {
     }
     return { data };
 }
-const getBlogs = async (req, res) => {
+const getBlogs = async (_req, res) => {
     try {
-        const isPublic = !req.headers.authorization;
-        const filter = isPublic ? { status: 'Published' } : {};
-        const blogs = await Blog_1.Blog.find(filter).sort({ publishedAt: -1, createdAt: -1 });
-        res.json(blogs);
+        const blogs = await Blog_1.Blog.find({ status: 'Published' }).sort({ publishedAt: -1, createdAt: -1 });
+        res.json((0, public_1.toPublic)(blogs));
     }
     catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
 };
 exports.getBlogs = getBlogs;
+const getAdminBlogs = async (_req, res) => {
+    try {
+        const blogs = await Blog_1.Blog.find().sort({ publishedAt: -1, createdAt: -1 });
+        res.json(blogs);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+exports.getAdminBlogs = getAdminBlogs;
 const getBlogBySlug = async (req, res) => {
     try {
         const blog = await Blog_1.Blog.findOne({ slug: req.params.slug, status: 'Published' });
+        if (!blog)
+            return res.status(404).json({ error: 'Blog not found' });
+        res.json((0, public_1.toPublic)(blog));
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+exports.getBlogBySlug = getBlogBySlug;
+const getBlogById = async (req, res) => {
+    try {
+        const blog = await Blog_1.Blog.findById(req.params.id);
         if (!blog)
             return res.status(404).json({ error: 'Blog not found' });
         res.json(blog);
@@ -40,7 +61,7 @@ const getBlogBySlug = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
-exports.getBlogBySlug = getBlogBySlug;
+exports.getBlogById = getBlogById;
 const createBlog = async (req, res) => {
     try {
         const prepared = prepareBlog(req.body, true);

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Product } from '../models/Product';
 import { sanitizeHtml } from '../utils/html';
+import { toPublic } from '../utils/public';
 import { cleanSlug, duplicateSlug, slugPattern, SLUG_DUPLICATE_ERROR, SLUG_FORMAT_ERROR } from '../utils/slug';
 
 function text(value: unknown) {
@@ -107,11 +108,18 @@ function prepareProduct(body: Record<string, unknown>, { requireSlug }: { requir
   return { data };
 }
 
-export const getProducts = async (req: Request, res: Response) => {
+export const getProducts = async (_req: Request, res: Response) => {
   try {
-    const isPublic = !req.headers.authorization;
-    const filter: Record<string, string> = isPublic ? { status: 'Published' } : {};
-    const products = await Product.find(filter).sort({ order: 1, createdAt: -1 });
+    const products = await Product.find({ status: 'Published' }).sort({ order: 1, createdAt: -1 });
+    res.json(toPublic(products));
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const getAdminProducts = async (_req: Request, res: Response) => {
+  try {
+    const products = await Product.find().sort({ order: 1, createdAt: -1 });
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -121,6 +129,16 @@ export const getProducts = async (req: Request, res: Response) => {
 export const getProductBySlug = async (req: Request, res: Response) => {
   try {
     const product = await Product.findOne({ slug: req.params.slug, status: 'Published' });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    res.json(toPublic(product));
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const getProductById = async (req: Request, res: Response) => {
+  try {
+    const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
     res.json(product);
   } catch (error) {
